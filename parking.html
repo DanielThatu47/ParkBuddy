@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        :root {
+            --background: hsl(0, 0%, 100%);
+            --foreground: hsl(240, 10%, 3.9%);
+            --primary: hsl(346.8, 77.2%, 49.8%);
+            --primary-foreground: hsl(355.7, 100%, 99%);
+            --muted: hsl(240, 4.8%, 95.9%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+        }
+
+        .border-booked {
+            border-color: hsl(0, 72%, 51%);
+        }
+
+        .border-free {
+            border-color: hsl(120, 100%, 50%);
+        }
+
+        .border-closed {
+            border-color: hsl(0, 0%, 80%);
+        }
+
+        .slot-booked {
+            background-color: hsl(0, 72%, 51%);
+        }
+
+        .slot-free {
+            background-color: hsl(120, 100%, 50%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="w-full min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+        <div class="container mx-auto px-4 md:px-6 lg:px-8 py-12">
+            <h1 class="text-3xl font-bold mb-8 text-center">Smart Parking System</h1>
+
+            <!-- Parking Slots Grid -->
+            <div id="parkingSlots" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <!-- Slots will be populated here dynamically -->
+            </div>
+
+            <!-- Gate Control -->
+            <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4">Gate Control</h2>
+                <div class="flex items-center justify-center">
+                    <button id="toggleGateButton" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        Close Gate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Modal -->
+        <div id="bookingModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-md p-6 w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-4">Book Parking Slot</h2>
+                <form id="bookingForm" class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="name" class="block text-gray-700 font-medium mb-2">Name</label>
+                        <input type="text" id="name" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label for="date" class="block text-gray-700 font-medium mb-2">Date</label>
+                        <input type="date" id="date" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+                    </div>
+                    <div>
+                        <label for="time" class="block text-gray-700 font-medium mb-2">Time</label>
+                        <input type="time" id="time" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+                    </div>
+                    <div class="col-span-2 mt-6 flex justify-end">
+                        <button type="button" onclick="bookSlot()" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Book</button>
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 ml-4 bg-gray-300 text-black rounded-lg">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const parkingSlots = [
+            { id: 1, status: "booked", type: "car" },
+            { id: 2, status: "free", type: "motorcycle" },
+            { id: 3, status: "free", type: "car" },
+        ];
+
+        const parkingSlotsContainer = document.getElementById("parkingSlots");
+        const bookingModal = document.getElementById("bookingModal");
+
+        function updateParkingSlots() {
+            parkingSlotsContainer.innerHTML = "";
+            parkingSlots.forEach(slot => {
+                const slotDiv = document.createElement("div");
+                slotDiv.className = `bg-white rounded-lg shadow-md p-6 cursor-pointer transition-colors ${slot.status === "booked" ? "border-4 border-red-500" : "border-4 border-green-500"}`;
+                slotDiv.onclick = () => handleSlotClick(slot);
+                slotDiv.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-bold">Slot ${slot.id}</h3>
+                        <span class="px-2 py-1 rounded-full text-white text-sm ${slot.status === "booked" ? "bg-red-500" : "bg-green-500"}">
+                            ${slot.status === "booked" ? "Booked" : "Free"}
+                        </span>
+                    </div>
+                    <div class="flex items-center mt-2">
+                        <span class="text-gray-500">Vehicle Type: ${slot.type}</span>
+                    </div>
+                `;
+                parkingSlotsContainer.appendChild(slotDiv);
+            });
+        }
+
+        function handleSlotClick(slot) {
+            if (slot.status === "free") {
+                bookingModal.classList.remove("hidden");
+                document.getElementById("name").value = ""; // Reset name input
+                document.getElementById("date").value = ""; // Reset date input
+                document.getElementById("time").value = ""; // Reset time input
+            }
+        }
+
+        function bookSlot() {
+            const name = document.getElementById("name").value;
+            const date = document.getElementById("date").value;
+            const time = document.getElementById("time").value;
+
+            const selectedSlot = parkingSlots.find(slot => slot.status === "free");
+            if (selectedSlot && name && date && time) {
+                selectedSlot.status = "booked";
+                updateParkingSlots();
+                closeModal();
+            }
+        }
+
+        function closeModal() {
+            bookingModal.classList.add("hidden");
+        }
+
+        let gateStatus = "closed";
+        const toggleGateButton = document.getElementById("toggleGateButton");
+        toggleGateButton.onclick = () => {
+            gateStatus = gateStatus === "closed" ? "open" : "closed";
+            toggleGateButton.innerText = gateStatus === "closed" ? "Close Gate" : "Open Gate";
+        };
+
+        // Initialize the parking slots display
+        updateParkingSlots();
+    </script>
+</body>
+
+</html>
