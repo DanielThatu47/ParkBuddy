@@ -7,26 +7,31 @@
         const parkingSlotsContainer = document.getElementById("parkingSlots");
         const bookingModal = document.getElementById("bookingModal");
 
-        function updateParkingSlots() {
-            parkingSlotsContainer.innerHTML = "";
-            parkingSlots.forEach(slot => {
-                const slotDiv = document.createElement("div");
-                slotDiv.className = `bg-white rounded-lg shadow-md p-6 cursor-pointer transition-colors ${slot.status === "booked" ? "border-4 border-red-500" : "border-4 border-green-500"}`;
-                slotDiv.onclick = () => handleSlotClick(slot);
-                slotDiv.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-bold">Slot ${slot.id}</h3>
-                        <span class="px-2 py-1 rounded-full text-white text-sm ${slot.status === "booked" ? "bg-red-500" : "bg-green-500"}">
-                            ${slot.status === "booked" ? "Booked" : "Free"}
-                        </span>
-                    </div>
-                    <div class="flex items-center mt-2">
-                        <span class="text-gray-500">Vehicle Type: ${slot.type}</span>
-                    </div>
-                `;
-                parkingSlotsContainer.appendChild(slotDiv);
-            });
-        }
+       function updateParkingSlots() {
+    parkingSlotsContainer.innerHTML = "";
+    parkingSlots.forEach(slot => {
+        const slotDiv = document.createElement("div");
+        slotDiv.className = `bg-white rounded-lg shadow-md p-6 cursor-pointer transition-colors ${slot.status === "booked" ? "border-4 border-red-500" : "border-4 border-green-500"}`;
+        slotDiv.onclick = () => handleSlotClick(slot);
+        slotDiv.innerHTML = `
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold">Slot ${slot.id}</h3>
+                <span class="px-2 py-1 rounded-full text-white text-sm ${slot.status === "booked" ? "bg-red-500" : "bg-green-500"}">
+                    ${slot.status === "booked" ? "Booked" : "Free"}
+                </span>
+            </div>
+            <div class="flex items-center mt-2">
+                <span class="text-gray-500">Vehicle Type: ${slot.type}</span>
+            </div>
+        `;
+        parkingSlotsContainer.appendChild(slotDiv);
+        // Firebase listener for slot status
+        database.ref(`parking_space/slot${slot.id}/status`).on("value", function(snapshot) {
+            slot.status = snapshot.val();
+            updateParkingSlots(); // Refresh the slots display
+        });
+    });
+}
 
         function handleSlotClick(slot) {
             if (slot.status === "free") {
