@@ -42,18 +42,63 @@
             }
         }
 
-        function bookSlot() {
-            const name = document.getElementById("name").value;
-            const date = document.getElementById("date").value;
-            const time = document.getElementById("time").value;
+       function updateSlotAvailability(slotId, status) {
+    const statusBox = document.getElementById(`${slotId}-status`);
+    const bookBtn = document.getElementById(`${slotId}-book-btn`);
+    const cancelBtn = document.getElementById(`${slotId}-cancel-btn`);
+    const datetimeInput = document.getElementById(`${slotId}-datetime`);
 
-            const selectedSlot = parkingSlots.find(slot => slot.status === "free");
-            if (selectedSlot && name && date && time) {
-                selectedSlot.status = "booked";
-                updateParkingSlots();
-                closeModal();
-            }
-        }
+    statusBox.textContent = status;
+
+    if (status.toLowerCase() === "free") {
+        statusBox.classList.add('free');
+        statusBox.classList.remove('occupied');
+        bookBtn.disabled = false;
+        cancelBtn.style.display = 'none';
+        datetimeInput.style.display = 'none';
+
+        bookBtn.addEventListener("click", function() {
+            datetimeInput.style.display = 'block';
+            flatpickr(`#${slotId}-datetime`, {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                minDate: "today",
+                onChange: function(selectedDates, dateStr) {
+                    bookSlot(slotId, dateStr);
+                }
+            });
+        });
+
+    } else {
+        statusBox.classList.add('occupied');
+        statusBox.classList.remove('free');
+        bookBtn.disabled = true;
+        datetimeInput.style.display = 'none';
+        cancelBtn.style.display = 'block';
+
+        cancelBtn.addEventListener("click", function() {
+            cancelBooking(slotId);
+        });
+    }
+}
+
+function bookSlot(slotId, dateStr) {
+    const slotRef = database.ref(`parking_space/${slotId}/booking`);
+    slotRef.set({
+        date: dateStr,
+        status: "Booked"
+    });
+    alert(`Slot ${slotId} booked for ${dateStr}`);
+}
+
+function cancelBooking(slotId) {
+    const slotRef = database.ref(`parking_space/${slotId}/booking`);
+    slotRef.set({
+        date: null,
+        status: "free"
+    });
+    alert(`Slot ${slotId} booking has been canceled.`);
+}
 
         function closeModal() {
             bookingModal.classList.add("hidden");
